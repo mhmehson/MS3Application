@@ -17,15 +17,15 @@ Steps to run app:
 
 3)  Clone the repo locally : git clone https://github.com/mhmehson/MS3Application.git
 4)  After cloning:
-    a) cd/MS3Applicaiton/MS3Application
-    b) int pom.xml update the compiler version within <properties> to the one installed on your machine (check with javac -version):
-     <properties>
-      <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-      <maven.compiler.source>1.8</maven.compiler.source>
-      <maven.compiler.target>1.8</maven.compiler.target>
-    </properties>
-    c) mvn clean install
-    c) mvn exec:java
+a) cd/MS3Applicaiton/MS3Application
+b) int pom.xml update the compiler version within <properties> to the one installed on your machine (check with javac -version):
+<properties>
+  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  <maven.compiler.source>1.8</maven.compiler.source>
+  <maven.compiler.target>1.8</maven.compiler.target>
+</properties>
+c) mvn clean install
+c) mvn exec:java
 
 Application Info:
 
