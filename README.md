@@ -1,5 +1,5 @@
 # MS3Application
-This repo contains a java application that consumes a csv, parses the data, adds valid records to a SQLite database, writes invalid records to a csv, and logs stats to a log file.
+This repo contains a java application that consumes a csv, parses the data, adds valid records to a SQLite database, writes invalid records to a output csv, and logs stats to a log file. This README.md describes approaches and design choices and the assumptions that were made during implementation.
 
 ## Steps to run app
 1)  Ensure the Java SDK (JDK) is installed on your computer. Use Java SE 8 to avoid any issues.
@@ -17,7 +17,7 @@ This repo contains a java application that consumes a csv, parses the data, adds
 
 A) Maven is used as a build tool. It was suggested and having worked with it previously I was already familiar with its usage.
 
-B) After initializing my project with Maven, I decided to look through the instructions to determine if there were any obvious dependencies/libraries I may need for the project. I added the sqlite dependency. After researching csv parsers I chose opencsv as it appeared to be widely used and appeared to be easy to use as well. At this point I put off adding a logging framework as is was something I didn't need immediately and I needed to research the frameworks a bit more.
+B) After initializing the project with Maven, I decided to look through the instructions to determine if there were any obvious dependencies/libraries I may need for the project. I added the sqlite dependency. After researching csv parsers I chose opencsv as it appeared to be widely used and appeared to be easy to use as well. At this point I put off adding a logging framework as is was something I didn't need immediately and I needed to research the frameworks a bit more.
 
 C) The project is structured so that initially there is only a "resource" folder containing the input CSV and the "src" folder. When the application runs, an "output" folder is created containing the ms3Interview-bad.csv file, a "database" folder is created containing the ms3Interview.db file, and a "logs" folder is created containing the ms3Interview.log file. 
 
@@ -44,18 +44,3 @@ E) A record cannot contain more than 10 columns or elements and it cannot be mis
 F) A log history will be kept (vs overwriting the log file). Stats are appended in the log file and include a date for each log event.
 
 G) java.util.Logger is adequate for this application. This assumes that the application is executed once in a while. If you were processing many CSVs or extensive logging is required throughout the application, then perhaps the performance benefits of a framework such as log4j2 would make it worth using in the application.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  
