@@ -34,7 +34,8 @@ public class Csv2DbLoader {
     }
 
     /**
-     * Parses a csv file, inserts valid records into SQLite database, and write invalid records to new csv
+     * Parses a csv file, inserts valid records into SQLite database, 
+     * and writes invalid records to ./output/ms3Interview-bd.csv
      *
      * @param connection the connection to the SQLite DB
      */
@@ -104,9 +105,9 @@ public class Csv2DbLoader {
     }
 
     /**
-     * Sets up databasea and returns the connection to a database
+     * Sets up database and returns the connection to the database
      *
-     * @return the connection to the SQLite DB
+     * @return the connection to the SQLite database
      */
     private static Connection initializeDatabase() {
         File directory = new File("database");
@@ -153,7 +154,7 @@ public class Csv2DbLoader {
     }
 
     /**
-     * Closed the connection to a database
+     * Closes the connection to a database
      *
      * @param connection the connection to the SQLite DB
      */
