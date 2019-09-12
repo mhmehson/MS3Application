@@ -245,15 +245,15 @@ public class Csv2DbLoader {
      * @param invalidRecordsCount   the number of records that were invalid
      */
     private static void logStats(int totalRecordsProcessed, int validRecordsCount, int invalidRecordsCount) {
+        Logger logger = Logger.getLogger("Stats Logger");
+        logger.setUseParentHandlers(false); // want to disable console output
+        FileHandler fh = null;
         File directory = new File("logs");
-        Logger logger = Logger.getLogger("Stats_Logger");
-        FileHandler fh;
         String fileName = "./logs/" + inputFileName + ".log";
 
         if (!directory.exists()) {
             directory.mkdir();
         }
-
         try {
             // Configer logger with a file handler
             fh = new FileHandler(fileName, true);
