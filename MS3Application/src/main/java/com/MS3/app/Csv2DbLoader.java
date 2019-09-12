@@ -264,9 +264,9 @@ public class Csv2DbLoader {
 
             // log message
             logger.info(
-                    "\n# records received: " + totalRecordsProcessed +
-                            "\n# records successful: " + validRecordsCount +
-                            "\n# records failed: " + invalidRecordsCount
+                    "\n# of records received: " + totalRecordsProcessed +
+                    "\n# of records successful: " + validRecordsCount +
+                    "\n# of records failed: " + invalidRecordsCount
             );
         } catch (SecurityException e) {
             e.printStackTrace();
