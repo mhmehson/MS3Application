@@ -8,8 +8,8 @@ This repo contains a java application that consumes a csv, parses the data, adds
 4)  Clone the repo locally: git clone https://github.com/mhmehson/MS3Application.git
 5)  cd into MS3Applicaiton/MS3Application (make sure you're inside the sub folder MS3Application containing the pom.xml)
 6)  In the pom.xml update the compiler version within the "properties" tag to the one installed on your machine (check with       javac -version). Is set to 1.8. Update accordingly.
-7)  mvn clean install
-8)  mvn exec:java
+7)  Run "mvn clean install" - may take a while as dependencies are downloaded
+8)  Run "mvn exec:java" - all output will be in database, output, and log folders
 
 ## Application Info
 
