@@ -28,37 +28,9 @@ public class Csv2DbLoader {
     private static int numberOfColumns = 10;
 
     public static void main(String[] args) {
-        Connection connection = getDbConnection();
-        createDbTable(connection);
+        Connection connection = initializeDatabase();
         processCSV(connection);
         closeDbConnection(connection);
-    }
-
-    /**
-     * Creates a table in the SQLite database for storing impending records
-     *
-     * @param connection the connection to the SQLite DB
-     */
-    public static void createDbTable(Connection connection) {
-
-        Statement statement = null;
-
-        // SQL query statements
-        String dropTable = "DROP TABLE IF EXISTS transactions";
-        String createTable = "CREATE TABLE transactions (A test, B text, C text, " +
-                "D text, E text, F text, G text, H text, I text, J text)";
-
-        try {
-            // create statement object
-            statement = connection.createStatement();
-
-            // drop table if exists and create table
-            statement.executeUpdate(dropTable);
-            statement.executeUpdate(createTable);
-            statement.close();
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        }
     }
 
     /**
@@ -70,10 +42,10 @@ public class Csv2DbLoader {
         CSVReader csvReader = getCSVReader();
         CSVWriter csvWriter = getCSVWriter();
         PreparedStatement preparedStatement = null;
-        String insertIntoTable = "INSERT INTO transactions(A,B,C,D,E,F,G,H,I,J) " +
+        String insertIntoTable = "INSERT INTO purchase(A,B,C,D,E,F,G,H,I,J) " +
                 "VALUES(?,?,?,?,?,?,?,?,?,?)";
 
-        int totalRecordsProcessded = 0;
+        int totalRecordsProcessed = 0;
         int validRecordsCount = 0;
         int invalidRecordsCount = 0;
 
@@ -81,9 +53,9 @@ public class Csv2DbLoader {
             // create PreparedStatement - insert SQL statement is parameterized
             preparedStatement = connection.prepareStatement(insertIntoTable);
 
-            // batchSize is the batch size threshold, count tracks current batch size
-            int batchSize = 1000;
-            int count = 0;
+            // variables for batching insert commands - batching is more efficient than individual inserts
+            int batchSizeThreshold = 1000;
+            int batchSize = 0;
 
             // parse csv line by line, adding valid records to batch for insertion and invalid ones to list
             String[] line;
@@ -106,19 +78,18 @@ public class Csv2DbLoader {
                 if (isValidRecord) {
                     preparedStatement.addBatch();
                     validRecordsCount++;
-                    count++;
+                    batchSize++;
                 } else {
                     csvWriter.writeNext(line);
                     invalidRecordsCount++;
                 }
-                // if batch of commands meets size requirment, submit batch to db for execution
-                if (count == batchSize) {
+                if (batchSize == batchSizeThreshold) {
                     preparedStatement.executeBatch();
-                    count = 0;
+                    batchSize = 0;
                 }
-                totalRecordsProcessded++;
+                totalRecordsProcessed++;
             }
-            // last batch of commands may not meet min requirement, but still needs to be executed
+            // last batch of commands may not meet threshold requirement, but still needs to be executed
             preparedStatement.executeBatch();
             preparedStatement.close();
         } catch (IOException ioe) {
@@ -127,29 +98,58 @@ public class Csv2DbLoader {
             sqle.printStackTrace();
         } finally {
         }
-        logStats(totalRecordsProcessded, validRecordsCount, invalidRecordsCount);
+        logStats(totalRecordsProcessed, validRecordsCount, invalidRecordsCount);
         closeCSVReader(csvReader);
         closeCSVWriter(csvWriter);
     }
 
     /**
-     * Returns the connection to a SQLite database
+     * Sets up databasea and returns the connection to a database
      *
      * @return the connection to the SQLite DB
      */
-    private static Connection getDbConnection() {
-
+    private static Connection initializeDatabase() {
         File directory = new File("database");
+        String url = "jdbc:sqlite:database/" + inputFileName + ".db";
+
         if (!directory.exists()) {
             directory.mkdir();
         }
         Connection connection = null;
         try {
-            connection = DriverManager.getConnection("jdbc:sqlite:database/" + inputFileName + ".db");
+            connection = DriverManager.getConnection(url);
         } catch (SQLException sqle) {
             sqle.printStackTrace();
         }
+        createDbTable(connection);
         return connection;
+    }
+
+    /**
+     * Creates a table in the SQLite database
+     *
+     * @param connection the connection to the SQLite DB
+     */
+    public static void createDbTable(Connection connection) {
+
+        Statement statement = null;
+
+        // SQL query statements
+        String dropTable = "DROP TABLE IF EXISTS purchase";
+        String createTable = "CREATE TABLE purchase (A test, B text, C text, " +
+                "D text, E text, F text, G text, H text, I text, J text)";
+
+        try {
+            // create statement object
+            statement = connection.createStatement();
+
+            // drop table if exists and create table
+            statement.executeUpdate(dropTable);
+            statement.executeUpdate(createTable);
+            statement.close();
+        } catch (SQLException sqle) {
+            sqle.printStackTrace();
+        }
     }
 
     /**
@@ -173,8 +173,9 @@ public class Csv2DbLoader {
     private static CSVReader getCSVReader() {
         Reader reader = null;
         CSVReader csvReader = null;
+        String fileName = "resources/" + inputFileName + ".csv";
         try {
-            reader = new BufferedReader(new FileReader("resources/" + inputFileName + ".csv"));
+            reader = new BufferedReader(new FileReader(fileName));
             csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build();
         } catch (FileNotFoundException fnfe) {
             fnfe.printStackTrace();
@@ -203,13 +204,15 @@ public class Csv2DbLoader {
      */
     private static CSVWriter getCSVWriter() {
         File directory = new File("output");
+        Writer writer = null;
+        CSVWriter csvWriter = null;
+        String fileName = "output/" + inputFileName + "-bad.csv";
+
         if (!directory.exists()) {
             directory.mkdir();
         }
-        Writer writer = null;
-        CSVWriter csvWriter = null;
         try {
-            writer = new BufferedWriter(new FileWriter("output/" + inputFileName + "-bad.csv"));
+            writer = new BufferedWriter(new FileWriter(fileName));
             csvWriter = new CSVWriter(writer,
                     CSVWriter.DEFAULT_SEPARATOR,
                     CSVWriter.NO_QUOTE_CHARACTER,
@@ -241,30 +244,29 @@ public class Csv2DbLoader {
      * @param validRecordsCount     the number of records that were valid
      * @param invalidRecordsCount   the number of records that were invalid
      */
-    private static void logStats(int totalRecordsProcessded, int validRecordsCount, int invalidRecordsCount) {
-
+    private static void logStats(int totalRecordsProcessed, int validRecordsCount, int invalidRecordsCount) {
         File directory = new File("logs");
+        Logger logger = Logger.getLogger("Stats_Logger");
+        FileHandler fh;
+        String fileName = "./logs/" + inputFileName + ".log";
+
         if (!directory.exists()) {
             directory.mkdir();
         }
-        Logger logger = Logger.getLogger("Stats_Logger");
-        FileHandler fh;
 
         try {
-
             // Configer logger with a file handler
-            fh = new FileHandler("./logs/" + inputFileName + ".log", true);
+            fh = new FileHandler(fileName, true);
             logger.addHandler(fh);
             SimpleFormatter formatter = new SimpleFormatter();
             fh.setFormatter(formatter);
 
             // log message
             logger.info(
-                    "\n# records received: " + totalRecordsProcessded +
+                    "\n# records received: " + totalRecordsProcessed +
                             "\n# records successful: " + validRecordsCount +
                             "\n# records failed: " + invalidRecordsCount
             );
-
         } catch (SecurityException e) {
             e.printStackTrace();
         } catch (IOException e) {
