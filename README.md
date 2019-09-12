@@ -23,11 +23,13 @@ C) The project is structured so that initially there is only a "resource" folder
 
 D) The code first initializes a database. Having worked with Spring Boot previously, I recalled that Spring Boot typically sets up the database for the application during initialization, so it made sense to initialize the database first. After all, you can't store records if there is no database setup already to store them into. I called the single table "purchase" (see Assumption C). The data type for the columns is text (see Assumption D).
 
-E) Next, the CSV is parsed line-by-line using a CSVReader. Each record is validated, a PreparedStatement is built for inserting the particular record, and the PreparedStatement is added to a batch. PreparedStatements are used (vs Statement) because they are reusable when one need to repeat a statement(i.e. repeated inserts) and are cached by the database on first use for improved performance. Additionally PrepareStatement allow for parameters and when used in conjunction with the setString method (i.e. not using String concatenation), prevent SQL injection attacks. The PreparedStatements are batched in order to reduce the number of Database round trip accesses, which should improve performance.
+E) Next, the CSV is parsed line-by-line using a CSVReader. Each record is validated, a PreparedStatement is built for inserting the particular record, and the PreparedStatement is added to a batch. PreparedStatements are used (vs Statement) because they are reusable when one need to repeat a statement(i.e. repeated inserts) and are cached by the database on first use for improved performance. Additionally PrepareStatement allow for parameters and when used in conjunction with the setString method (i.e. not using String concatenation), prevent SQL injection attacks. 
 
-F) Invalid records are written to ./output/ms3Interview-bad.csv. A CSVWriter to write the records to the csv. Also note that BufferedReader and BufferedWriter are used for the CSVReader and CSVWriter. The buffered versions should be more efficient then non-buffered implementations of Reader and Writer.
+F) The PreparedStatements are batched in order to reduce the number of Database round trip accesses, which should improve performance. The size of the batch depends on how much memory is available. I tried several different sizes, and arbitrarily chose 1000 as I couldn't discern any significant difference based on my limited testing with the 1 provided csv that I've used for input.
 
-G) The built in java.util.Logger to log the processing stats to ./logs/ms3Interview.log (see Assumptions G)
+G) Invalid records are written to ./output/ms3Interview-bad.csv. A CSVWriter to write the records to the csv. Also note that BufferedReader and BufferedWriter are used for the CSVReader and CSVWriter. The buffered versions should be more efficient then non-buffered implementations of Reader and Writer.
+
+H) The built in java.util.Logger to log the processing stats to ./logs/ms3Interview.log (see Assumptions G)
 
 ### Assumptions:
 
