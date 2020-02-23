@@ -15,6 +15,7 @@ import java.sql.SQLException;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
+import com.opencsv.exceptions.CsvValidationException;
 
 public class Csv2DbLoader {
    private final int NUMBER_OF_COLUMNS = 10;
@@ -88,11 +89,12 @@ public class Csv2DbLoader {
          // be executed
          preparedStatement.executeBatch();
          preparedStatement.close();
+      } catch (CsvValidationException cve) {
+         cve.printStackTrace();
       } catch (IOException ioe) {
          ioe.printStackTrace();
       } catch (SQLException sqle) {
          sqle.printStackTrace();
-      } finally {
       }
 
       closeCSVReader(csvReader);
