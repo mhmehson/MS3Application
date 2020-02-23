@@ -3,3 +3,6 @@
 .settings
 .factorypath
 ./target/*
+./logs/*
+./database/*
+./output/*

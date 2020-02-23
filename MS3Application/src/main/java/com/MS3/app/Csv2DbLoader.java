@@ -10,267 +10,175 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
-import java.util.logging.FileHandler;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.CSVWriter;
 
 public class Csv2DbLoader {
+   private final int NUMBER_OF_COLUMNS = 10;
+   private final String inputFileName;
+   private final Connection dbConnection;
 
-    private static String inputFileName = "ms3Interview";
-    private static int numberOfColumns = 10;
+   public Csv2DbLoader(Connection dbConnection, String inputFileName) {
+      this.dbConnection = dbConnection;
+      this.inputFileName = inputFileName;
+   }
 
-    public static void main(String[] args) {
-        Connection connection = initializeDatabase();
-        processCSV(connection);
-        closeDbConnection(connection);
-    }
+   /**
+    * Parses a csv file, inserts valid records into SQLite database, and write
+    * invalid records to new csv
+    *
+    */
+   public void processCSV() {
+      CSVReader csvReader = getCSVReader();
+      CSVWriter csvWriter = getCSVWriter();
+      PreparedStatement preparedStatement = null;
+      String insertIntoTable = "INSERT INTO purchase(A,B,C,D,E,F,G,H,I,J) " + "VALUES(?,?,?,?,?,?,?,?,?,?)";
 
-    /**
-     * Parses a csv file, inserts valid records into SQLite database, and write invalid records to new csv
-     *
-     * @param connection the connection to the SQLite DB
-     */
-    private static void processCSV(Connection connection) {
-        CSVReader csvReader = getCSVReader();
-        CSVWriter csvWriter = getCSVWriter();
-        PreparedStatement preparedStatement = null;
-        String insertIntoTable = "INSERT INTO purchase(A,B,C,D,E,F,G,H,I,J) " +
-                "VALUES(?,?,?,?,?,?,?,?,?,?)";
+      int totalRecordsProcessed = 0;
+      int validRecordsCount = 0;
+      int invalidRecordsCount = 0;
 
-        int totalRecordsProcessed = 0;
-        int validRecordsCount = 0;
-        int invalidRecordsCount = 0;
+      try {
+         // create PreparedStatement - insert SQL statement is parameterized
+         preparedStatement = dbConnection.prepareStatement(insertIntoTable);
 
-        try {
-            // create PreparedStatement - insert SQL statement is parameterized
-            preparedStatement = connection.prepareStatement(insertIntoTable);
+         // variables for batching insert commands - batching is more efficient than
+         // individual inserts
+         int batchSizeThreshold = 1000;
+         int batchSize = 0;
 
-            // variables for batching insert commands - batching is more efficient than individual inserts
-            int batchSizeThreshold = 1000;
-            int batchSize = 0;
-
-            // parse csv line by line, adding valid records to batch for insertion and invalid ones to list
-            String[] line;
-            while ((line = csvReader.readNext()) != null) {
-                boolean isValidRecord = true;
-                if (line.length != numberOfColumns) {
-                    isValidRecord = false;
-                } else {
-                    int index = 1;
-                    for (String string : line) {
-                        if (string.isEmpty()) { // number of columns is 10, but 1 or more empty, not a valid record
-                            isValidRecord = false;
-                            break;
-                        } else {
-                            preparedStatement.setString(index++, string);
-                        }
-                    }
-                }
-                // if the record was valid, add insert command to batch, else write record to csv
-                if (isValidRecord) {
-                    preparedStatement.addBatch();
-                    validRecordsCount++;
-                    batchSize++;
-                } else {
-                    csvWriter.writeNext(line);
-                    invalidRecordsCount++;
-                }
-                if (batchSize == batchSizeThreshold) {
-                    preparedStatement.executeBatch();
-                    batchSize = 0;
-                }
-                totalRecordsProcessed++;
+         // parse csv line by line, adding valid records to batch for insertion and
+         // invalid ones to list
+         String[] line;
+         while ((line = csvReader.readNext()) != null) {
+            boolean isValidRecord = true;
+            if (line.length != NUMBER_OF_COLUMNS) {
+               isValidRecord = false;
+            } else {
+               int index = 1;
+               for (String string : line) {
+                  if (string.isEmpty()) { // number of columns is 10, but at least 1 empty = invalid record
+                     isValidRecord = false;
+                     break;
+                  } else {
+                     preparedStatement.setString(index++, string);
+                  }
+               }
             }
-            // last batch of commands may not meet threshold requirement, but still needs to be executed
-            preparedStatement.executeBatch();
-            preparedStatement.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        } finally {
-        }
-        logStats(totalRecordsProcessed, validRecordsCount, invalidRecordsCount);
-        closeCSVReader(csvReader);
-        closeCSVWriter(csvWriter);
-    }
+            // if the record was valid, add insert command to batch, else write record to
+            // csv
+            if (isValidRecord) {
+               preparedStatement.addBatch();
+               validRecordsCount++;
+               batchSize++;
+            } else {
+               csvWriter.writeNext(line);
+               invalidRecordsCount++;
+            }
+            if (batchSize == batchSizeThreshold) {
+               preparedStatement.executeBatch();
+               batchSize = 0;
+            }
+            totalRecordsProcessed++;
+         }
+         // last batch of commands may not meet threshold requirement, but still needs to
+         // be executed
+         preparedStatement.executeBatch();
+         preparedStatement.close();
+      } catch (IOException ioe) {
+         ioe.printStackTrace();
+      } catch (SQLException sqle) {
+         sqle.printStackTrace();
+      } finally {
+      }
 
-    /**
-     * Sets up databasea and returns the connection to a database
-     *
-     * @return the connection to the SQLite DB
-     */
-    private static Connection initializeDatabase() {
-        File directory = new File("database");
-        String url = "jdbc:sqlite:database/" + inputFileName + ".db";
+      closeCSVReader(csvReader);
+      closeCSVWriter(csvWriter);
 
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        Connection connection = null;
-        try {
-            connection = DriverManager.getConnection(url);
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        }
-        createDbTable(connection);
-        return connection;
-    }
+      this.logResults(totalRecordsProcessed, validRecordsCount, invalidRecordsCount);
+   }
 
-    /**
-     * Creates a table in the SQLite database
-     *
-     * @param connection the connection to the SQLite DB
-     */
-    public static void createDbTable(Connection connection) {
+   /**
+    * Returns a CSVReader instance for reading a CSV file
+    *
+    * @return a CSVReader instance
+    */
+   private CSVReader getCSVReader() {
+      Reader reader = null;
+      CSVReader csvReader = null;
+      String fileName = "resources/" + this.inputFileName + ".csv";
+      try {
+         reader = new BufferedReader(new FileReader(fileName));
+         csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build();
+      } catch (FileNotFoundException fnfe) {
+         fnfe.printStackTrace();
+      }
 
-        Statement statement = null;
+      return csvReader;
+   }
 
-        // SQL query statements
-        String dropTable = "DROP TABLE IF EXISTS purchase";
-        String createTable = "CREATE TABLE purchase (A test, B text, C text, " +
-                "D text, E text, F text, G text, H text, I text, J text)";
+   /**
+    * Closes a CSVReader instance
+    *
+    * @param csvReader CSVReader instance that needs to be closed
+    */
+   private void closeCSVReader(CSVReader csvReader) {
+      try {
+         csvReader.close();
+      } catch (IOException ioe) {
+         ioe.printStackTrace();
+      }
+   }
 
-        try {
-            // create statement object
-            statement = connection.createStatement();
+   /**
+    * Returns a CSVWriter instance for writing to CSV file
+    *
+    * @return a CSVWriter instance
+    */
+   private CSVWriter getCSVWriter() {
+      File directory = new File("output");
+      Writer writer = null;
+      CSVWriter csvWriter = null;
+      String fileName = "output/" + this.inputFileName + "-bad.csv";
 
-            // drop table if exists and create table
-            statement.executeUpdate(dropTable);
-            statement.executeUpdate(createTable);
-            statement.close();
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        }
-    }
+      if (!directory.exists()) {
+         directory.mkdir();
+      }
+      try {
+         writer = new BufferedWriter(new FileWriter(fileName));
+         csvWriter = new CSVWriter(writer, CSVWriter.DEFAULT_SEPARATOR, CSVWriter.NO_QUOTE_CHARACTER,
+               CSVWriter.DEFAULT_ESCAPE_CHARACTER, CSVWriter.DEFAULT_LINE_END);
+      } catch (IOException ioe) {
+         ioe.printStackTrace();
+      }
+      return csvWriter;
+   }
 
-    /**
-     * Closed the connection to a database
-     *
-     * @param connection the connection to the SQLite DB
-     */
-    private static void closeDbConnection(Connection connection) {
-        try {
-            connection.close();
-        } catch (SQLException sqle) {
-            sqle.printStackTrace();
-        }
-    }
+   /**
+    * Closes a CSVWriter instance
+    *
+    * @param csvWriter CSVWriter instance that needs to be closed
+    */
+   private void closeCSVWriter(CSVWriter csvWriter) {
+      try {
+         csvWriter.close();
+      } catch (IOException ioe) {
+         ioe.printStackTrace();
+      }
+   }
 
-    /**
-     * Return an instance of CSVReader for reading a CSV file
-     *
-     * @return a CSVReader instance
-     */
-    private static CSVReader getCSVReader() {
-        Reader reader = null;
-        CSVReader csvReader = null;
-        String fileName = "resources/" + inputFileName + ".csv";
-        try {
-            reader = new BufferedReader(new FileReader(fileName));
-            csvReader = new CSVReaderBuilder(reader).withSkipLines(1).build();
-        } catch (FileNotFoundException fnfe) {
-            fnfe.printStackTrace();
-        }
-
-        return csvReader;
-    }
-
-    /**
-     * Closes a CSVReader instance
-     *
-     * @param csvReader CSVReader instance that needs to be closed
-     */
-    private static void closeCSVReader(CSVReader csvReader) {
-        try {
-            csvReader.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    /**
-     * Returns a CSVWriter instance for writing to CSV file
-     *
-     * @return a CSVWriter instance
-     */
-    private static CSVWriter getCSVWriter() {
-        File directory = new File("output");
-        Writer writer = null;
-        CSVWriter csvWriter = null;
-        String fileName = "output/" + inputFileName + "-bad.csv";
-
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        try {
-            writer = new BufferedWriter(new FileWriter(fileName));
-            csvWriter = new CSVWriter(writer,
-                    CSVWriter.DEFAULT_SEPARATOR,
-                    CSVWriter.NO_QUOTE_CHARACTER,
-                    CSVWriter.DEFAULT_ESCAPE_CHARACTER,
-                    CSVWriter.DEFAULT_LINE_END);
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-        return csvWriter;
-    }
-
-    /**
-     * Closes a CSVWriter instance
-     *
-     * @param csvWriter CSVWriter instance that needs to be closed
-     */
-    private static void closeCSVWriter(CSVWriter csvWriter) {
-        try {
-            csvWriter.close();
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        }
-    }
-
-    /**
-     * Logs processing stats to a file and console
-     *
-     * @param totalRecordsProcessed the total number of records that were processed from CSV
-     * @param validRecordsCount     the number of records that were valid
-     * @param invalidRecordsCount   the number of records that were invalid
-     */
-    private static void logStats(int totalRecordsProcessed, int validRecordsCount, int invalidRecordsCount) {
-        Logger logger = Logger.getLogger("Stats Logger");
-        logger.setUseParentHandlers(false); // want to disable console output
-        FileHandler fh = null;
-        File directory = new File("logs");
-        String fileName = "./logs/" + inputFileName + ".log";
-
-        if (!directory.exists()) {
-            directory.mkdir();
-        }
-        try {
-            // Configer logger with a file handler
-            fh = new FileHandler(fileName, true);
-            logger.addHandler(fh);
-            SimpleFormatter formatter = new SimpleFormatter();
-            fh.setFormatter(formatter);
-
-            // log message
-            logger.info(
-                    "\n# records received: " + totalRecordsProcessed +
-                            "\n# records successful: " + validRecordsCount +
-                            "\n# records failed: " + invalidRecordsCount
-            );
-        } catch (SecurityException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+   /**
+    * Used StatsLogger to log results to file (/logs/ms3Interview.log)
+    *
+    * @param totalRecordsProcessed total records read from csv
+    * @param validRecordsCount     total number of valid records
+    * @param invalidRecordsCount   total number of invalid records
+    * 
+    */
+   private void logResults(int totalRecordsProcessed, int validRecordsCount, int invalidRecordsCount) {
+      StatsLogger.logStats(totalRecordsProcessed, validRecordsCount, invalidRecordsCount, this.inputFileName);
+   }
 }

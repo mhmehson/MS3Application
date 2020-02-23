@@ -5,22 +5,25 @@ Steps to run app:
 1)  Ensure the Java SDK (JDK) installed on your computer. This app uses Java SE 8. Compiler version 1.8.
 
 2)  Ensure maven is installed on your computer. 3.6.2 is latest as of this writting
-    One Mac:
-      Using brew: 
-        brew update
-        brew install maven
-      Manually:
-        Download tar from http://maven.apache.org/download.cgi#
-        tar xzvf apache-maven-3.6.2-bin.tar.gz
-    On Windows:
-      See: https://maven.apache.org/guides/getting-started/windows-prerequisites.html
+
+One Mac:
+
+Using brew: 
+brew update
+brew install maven
+
+Or Manually:
+Download tar from http://maven.apache.org/download.cgi#
+tar xzvf apache-maven-3.6.2-bin.tar.gz
+
+On Windows:
+See: https://maven.apache.org/guides/getting-started/windows-prerequisites.html
 
 3)  Clone the repo locally : git clone https://github.com/mhmehson/MS3Application.git
-4)  After cloning:
-  a) cd into MS3Applicaiton/MS3Application (make sure you're inside the sub folder MS3Application containing the pom.xml)
-  b) in the pom.xml update the compiler version within "properties" tag to the one installed on your machine (check with javac -version). Set to 1.8 by default.
-  c) mvn clean install
-  c) mvn exec:java
+4)  cd into MS3Applicaiton/MS3Application (make sure you're inside the sub folder MS3Application containing the pom.xml)
+5) in the pom.xml update the compiler version within "properties" tag to the one installed on your machine (check with javac      -version). Set to 1.8 by default.
+6) mvn clean install
+7) mvn exec:java
 
 Application Info:
 
