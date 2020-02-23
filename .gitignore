@@ -2,7 +2,8 @@
 .project
 .settings
 .factorypath
-./target/*
-./logs/*
-./database/*
-./output/*
+./MS3Application/target/*
+./MS3Application/logs/*
+./MS3Application/database/*
+./MS3Application/output/*
+./.vscode

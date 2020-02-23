@@ -11,32 +11,9 @@ This repo contains a java application that consumes a csv, parses the data, adds
 7)  Run "mvn clean install" - may take a while as dependencies are downloaded
 8)  Run "mvn exec:java" - all output will be in database, output, and log folders
 
-<<<<<<< HEAD
-2)  Ensure maven is installed on your computer. 3.6.2 is latest as of this writting
-
-One Mac:
-
-Using brew: 
-brew update
-brew install maven
-
-Or Manually:
-Download tar from http://maven.apache.org/download.cgi#
-tar xzvf apache-maven-3.6.2-bin.tar.gz
-
-On Windows:
-See: https://maven.apache.org/guides/getting-started/windows-prerequisites.html
-
-3)  Clone the repo locally : git clone https://github.com/mhmehson/MS3Application.git
-4)  cd into MS3Applicaiton/MS3Application (make sure you're inside the sub folder MS3Application containing the pom.xml)
-5) in the pom.xml update the compiler version within "properties" tag to the one installed on your machine (check with javac      -version). Set to 1.8 by default.
-6) mvn clean install
-7) mvn exec:java
-=======
 ## Application Info
 
 ### Approach and Design Choices:
->>>>>>> 9d178f039166a9a7f2dfe15d01d51b15dfa77616
 
 A) Maven is used as a build tool. It was suggested and having worked with it previously I was already familiar with its usage.
 
