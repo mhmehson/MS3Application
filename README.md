@@ -53,7 +53,7 @@ G. java.util.Logger is adequate for this application. This assumes that the appl
 
 Major changes(s):
 
-1. Based on feedback received previously, the applicaiton has been modified to be more objected oriented. Previosuly all code was in a single file and was more similar to procedural programming. The code has now been broken up into various classes with objects of each class having a better-defined logical place/functionality in relation to the other objects. The main method is in class MS2Application. Database initialization is handled by an instance of the DatabaseManager class. An instance of the Csv2DbLoader class is responsible for parsing the csv, determining valid/invalid records, inserting valid records into a database, and writing invalid records to a file. StatsLogger provides a static helper method for printing final stats to a log file.
+1. Based on feedback received previously, the code has been modified to make use of more objects. Previosuly all code was in a single file and there was no logical seperation of funtionality/concerns. The code has now been broken up into various classes with objects of the classes having specific properties and functionality. The main method is in class Ms3Application. Database initialization is handled by an instance of the DatabaseManager class. An instance of the Csv2DbLoader class is responsible for parsing the csv, determining valid/invalid records, inserting valid records into a database, and writing invalid records to a file. StatsLogger provides a static helper method for printing final stats to a log file.
 
 Minor change(s):
 
