@@ -10,8 +10,8 @@ This repo contains a java application that consumes a csv, parses the data, adds
 4.  Clone the repo locally: git clone https://github.com/mhmehson/MS3Application.git
 5.  cd into MS3Applicaiton/MS3Application (make sure you're inside the sub folder MS3Application containing the pom.xml)
 6.  In the pom.xml update the compiler version within the "properties" tag to the one installed on your machine (check with javac -version). Is set to 1.8. Update accordingly.
-7.  Run "mvn clean install" - may take a while as dependencies are downloaded
-8.  Run "mvn exec:java" - all output will be in database, output, and log folders
+7.  In your terminal, execute "mvn clean install" - may take a while as dependencies are downloaded
+8.  Execute "mvn exec:java" - all output will be in database, output, and log folders
 
 ## Application Info
 
@@ -53,7 +53,7 @@ G. java.util.Logger is adequate for this application. This assumes that the appl
 
 Major changes(s):
 
-1. Based on feedback received previously, the applicaiton has been modified to be more objected oriented. Previosuly all code was in a single file and was more similar to procedural programming. The code has now been broken up into various classes with objects of each class having a better defined logical place/functionality in relation to the other objects. The main method is in class MS2Application. Database initializtion is handled by an instance of the DatabaseManager class. An instance of the Csv2DbLoader class is responble for parsing the csv and processing the contents to determine valid/invalid records.StatsLogger simply provides a static helper method for printing results to a log file.
+1. Based on feedback received previously, the applicaiton has been modified to be more objected oriented. Previosuly all code was in a single file and was more similar to procedural programming. The code has now been broken up into various classes with objects of each class having a better-defined logical place/functionality in relation to the other objects. The main method is in class MS2Application. Database initialization is handled by an instance of the DatabaseManager class. An instance of the Csv2DbLoader class is responsible for parsing the csv, determining valid/invalid records, inserting valid records into a database, and writing invalid records to a file. StatsLogger provides a static helper method for printing final stats to a log file.
 
 Minor change(s):
 
