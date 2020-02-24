@@ -57,6 +57,6 @@ Major change(s):
 
 Minor change(s):
 
-2. The directory was cleaned up a bit. There appeared to be 2 .gitignore files previously and other minor issues I had overlooked.
+2. The directory and files were cleaned up. There appeared to be 2 .gitignore files previously and other minor issues I had overlooked.
 
-3. SQLite and OpenCSV depencies were updated to the latest verions available.
+3. SQLite and OpenCSV dependencies were updated to the latest verions available.
